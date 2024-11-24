@@ -1,67 +1,82 @@
-from .minesweep import MinesweepBoard
+from .board import MinesweepBoard
 
 class MinesweepGame:
     def __init__(self):
         try:
             board_file = open('current', 'rb')
+            board_dimension = int.from_bytes(board_file.read(2))
             data = board_file.read()
             board_file.close()
-            board_y = data[0]
-            board_x = data[0]
-            self.board = MinesweepBoard(board_y, board_x)
-            for y in range(board_y):
-                for x in range(board_x):
-                    value = data[board_y*y + x + 1]
-                    self.board.set_value(y, x, value)
+            self.gameboard = MinesweepBoard(board_dimension, board_dimension)
+            for y in range(board_dimension):
+                for x in range(board_dimension):
+                    value = data[board_dimension*y + x]
+                    self.gameboard.set_value(y, x, value)
 
         except FileNotFoundError:
-            self.board = MinesweepBoard(3,3)
-            self.board.create_mines()
-            self.board.save_binary('current')
+            self.gameboard = MinesweepBoard(3,3)
+            self.gameboard.create_mines()
+            #self.gameboard.calculate_proximity()
+            self.save_binary('current')
 
-    def game_status(self):
-        return None
+        self.game_running = True
+        self.victory = False
 
-    def get_html_board(self):
-        line = ''
-        for y in range(self.board.y):
-            for x in range(self.board.x):
-                value = self.board.board[y][x]
-                if value > 16:
-                    value -= 16
-                    line += str(value)
-                else: line += str(16)
-            line += '<br>'
-        return line
-    
-    def get_binary_data(self):
-        binary_data = []
-        for y in range(self.board.y):
-            for x in range(self.board.x):
-                value = self.board.board[y][x]
-                if value > 16:
-                    value -= 16
-                    binary_data.append(value)
-                else:
-                    binary_data.append(11)
-        return binary_data
-    
-    # Create "flip" on gameboard to set u
+    def play_turn(self):
+        # see saved list of votes - check mine hits - flip new flips - save board
+        self.save_board('current_board')
 
-    # data sent to server in bits
-    # bits 0-3 (4 bits)
-    # 0 = game running : 0 = no, 1 = yes
-    # 1 = 0 = loss, 1 = victory (if game not running)
-    # 2-3 nothing
+    def save_binary(self, filename):
+        board_file = open(filename, 'wb')
+        binary_int = 0
+        board_file.write(self.gameboard.x.to_bytes(2))
+        for y in range(self.gameboard.y):
+            for x in range(self.gameboard.x):
+                binary_int = self.gameboard.board[y][x]
+                board_file.write(binary_int.to_bytes())
+        board_file.close()
+
+    # bytes 1-2:
+    # size of current board (number 3 representing 3x3 board, max 2^16
     #
-    # bits 4-16 (12 bits)
-    # size of current board (number 3 representing 3x3 board)
-    #
-    # size of board * 4 bits, starting from bit 17:
+    # each byte after 2, one tile:
     # 0-8 = mines close (0-8)
     # 9 = mine
     # 10 = mine that was hit
     # 11 = not explored
+    # 
+
+    def save_board(self, filename):
+        board_file = open(filename, 'wb')
+        binary_int = 0
+        if self.game_running: board_file.write(int(0).to_bytes())
+        else:
+            if not self.victory: board_file.write(int(1).to_bytes())
+            else: board_file.write(int(2).to_bytes())
+        board_file.write(self.gameboard.x.to_bytes(2))
+        for y in range(self.gameboard.y):
+            for x in range(self.gameboard.x):
+                binary_int = self.gameboard.board[y][x]
+                board_file.write(binary_int.to_bytes())
+        board_file.close()
+    
+    # Create "flip" on gameboard to set u
+
+    # data sent to server in bytes
+    # byte 1:
+    # 0 = game running
+    # 1 = game not running, loss
+    # 2 = game not running, victory
+    #
+    # bytes 2-3:
+    # size of current board (number 3 representing 3x3 board, max 2^16
+    #
+    # each byte after 3, one tile:
+    # 0-8 = mines close (0-8)
+    # 9 = mine
+    # 10 = mine that was hit
+    # 11 = not explored
+
 
 
  

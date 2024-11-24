@@ -9,4 +9,6 @@ RUN pip install -r requirements.txt
 EXPOSE 5000
 COPY app.py .
 COPY minesweep minesweep
+COPY templates templates
+COPY static static
 CMD ["flask", "run", "--debug"]

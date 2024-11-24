@@ -4,9 +4,10 @@ An attempt to create a multiplayer Minesweeper.
 Just for learning and fun
 
 
+docker-compose up -w
+
 
 Required:
-- front to query current board
 - front to display current board
 - clickable tiles to front to vote which tile to flip
 - timer to update board status
