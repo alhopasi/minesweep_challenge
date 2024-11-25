@@ -44,7 +44,7 @@ class MinesweepGame:
     # 9 = mine
     # 10 = mine that was hit
     # 11 = not explored
-    # 
+    # add 16 to 0-8 value if explored
 
     def save_board(self, filename):
         board_file = open(filename, 'wb')
@@ -57,10 +57,12 @@ class MinesweepGame:
         for y in range(self.gameboard.y):
             for x in range(self.gameboard.x):
                 binary_int = self.gameboard.board[y][x]
+                if binary_int > 16:
+                    binary_int -= 16
+                else: 
+                    binary_int = 11
                 board_file.write(binary_int.to_bytes())
         board_file.close()
-    
-    # Create "flip" on gameboard to set u
 
     # data sent to server in bytes
     # byte 1:

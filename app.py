@@ -7,16 +7,23 @@ app = Flask(__name__)
 @app.route('/', methods = ['GET'])
 def index():
     return render_template('index.html')
-    print('ok')
 
 @app.route('/board', methods = ['GET'])
 def post_board():
     return send_file('current_board', mimetype='application/octet-stream')
 
+@app.route('/play', methods = ['GET'])
+def next_turn():
+    game.play_turn()
+    return jsonify(success=True)
+
+@app.route('/reset', methods = ['GET'])
+def restart():
+    game = MinesweepGame()
+    return jsonify(success=True)
 
 
-
-@app.route('/', methods = ['POST'])
+@app.route('/vote', methods = ['POST'])
 def get_vote():
     request_data = request.get_json()
     vote_y = request_data['y']
@@ -28,5 +35,3 @@ def get_vote():
     return jsonify(success=True)
 
 game = MinesweepGame()
-
-game.play_turn()
