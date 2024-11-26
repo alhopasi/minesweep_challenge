@@ -8,7 +8,7 @@ docker-compose up -w
 
 
 Required:
-- front to display current board
+- draw border tiles on board
 - clickable tiles to front to vote which tile to flip
 - timer to update board status
 - voting to select which tiles to flip
@@ -21,3 +21,5 @@ Nice to have:
 - nicer gui
 - rules page / how it works
 - seperate backend from frontend (?)
+
+Minesweeper Tiles from https://kerkday.itch.io/minesweeper-tiles

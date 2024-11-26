@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Minesweep Challenge</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
-    <div id="board" style="white-space: pre-line"></div>
+    <div id="board"></div>
     <script src="{{url_for('static', filename='minesweep.js')}}"></script>
 </body>
 
