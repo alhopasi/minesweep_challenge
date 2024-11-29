@@ -18,6 +18,7 @@ class MinesweepGame:
             self.gameboard.create_mines()
             #self.gameboard.calculate_proximity()
             self.save_binary('current')
+            self.save_board('current_board')
 
         self.game_running = True
         self.victory = False
@@ -36,6 +37,27 @@ class MinesweepGame:
                 board_file.write(binary_int.to_bytes())
         board_file.close()
 
+    # NOTES FOR INCOMING EDITS: 
+    # USE ONLY 1 BOARD SAVE. EDIT SAVE/READ SYSTEM TO USE THIS. 
+    # CHANGE THE BOARD BYTES/BITS TO THIS:
+    #
+    # on 'board':
+    # 0-8 = explored, not mine
+    # 9 = not explored
+    # 10 = mine, not explored
+    # 11 = mine, explored
+    # This is: 1 byte (16 bits)
+    # Min to write to file = 1 byte. Each byte represents a tile.
+
+    # when saving:
+    # bits 0-1: game status:
+    # 0 = game running
+    # 1 = game stopped, loss
+    # 2 = game stopped, victory
+    # bits 3-15:
+    # size of current board (number 3 representing 3x3 board, max 2^14
+    # This is 2 bytes. After that, comes the 'board'
+    
     # bytes 1-2:
     # size of current board (number 3 representing 3x3 board, max 2^16
     #
