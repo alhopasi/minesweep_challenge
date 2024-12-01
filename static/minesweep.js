@@ -42,11 +42,11 @@ async function loadBoard() {
                 case 8:
                     img.src = '/static/images/8.png'
                 case 9:
-                    img.src = '/static/images/mine.png'
-                case 10:
-                    img.src = '/static/images/mine_exp.png'
-                case 11:
                     img.src = '/static/images/unknown.png'
+                case 10:
+                    img.src = '/static/images/mine.png'
+                case 11:
+                    img.src = '/static/images/mine_exp.png'
             }
             
             td.appendChild(img)
