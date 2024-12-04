@@ -20,8 +20,8 @@ class MinesweepBoard:
     def set_value(self, y, x, value):
         self.board[y][x] = value
 
-    def is_explored(self, y, x):
-        return (not (self.board[y][x] == 9 or self.board[y][x] == 10))
+    def is_not_explored(self, y, x):
+        return (self.board[y][x] == 9 or self.board[y][x] == 10)
     
     def explore(self, y, x):
         return None
