@@ -53,20 +53,25 @@ class MinesweepGame:
 
     def vote(self, y, x, ip):
         if self.gameboard.is_not_explored(y, x):
-            self.votes[ip] = [y, x]
+            self.votes[ip] = str(y) + ':' + str(x)
 
     def play_turn(self):
-        votes = {}
+        votes_by_y_x = {}
         for ip_address in self.votes:
             y_x = self.votes[ip_address]
-            print(y_x)
-            print(ip_address)
-            if y_x not in votes:
-                votes[y_x] = 0
-            votes[y_x] = votes[y_x] + 1
+            votes_by_y_x[y_x] = votes_by_y_x.get(y_x, 0) + 1
 
-        for y_x in votes:
-            print(y_x + ":" + str(votes[y_x]))
+        votes_sorted = dict(sorted(votes_by_y_x.items(), key=lambda item: -item[1]))
+
+        explore_amount = self.gameboard.x
+        for y_x in votes_sorted:
+            if explore_amount > 0:
+                y = y_x.split(':')[0]
+                x = y_x.split(':')[1]
+                self.gameboard.explore(y,x)
+                explore_amount -= 1
+
+            
         # see saved list of votes - explore votes - see game end - save board
         # explore tiles -> see if game end
         self.save_board('board')
