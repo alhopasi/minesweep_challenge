@@ -20,9 +20,47 @@ class MinesweepBoard:
     def set_value(self, y, x, value):
         self.board[y][x] = value
 
-    def is_not_explored(self, y, x):
-        return (self.board[y][x] == 9 or self.board[y][x] == 10)
+    def is_explored(self, y, x):
+        return not (self.board[y][x] == 9 or self.board[y][x] == 10)
     
     def explore(self, y, x):
-        return None
+        if self.is_explored(y, x):
+            return None
+        
+        explored_tile = self.board[y][x]
+
+        if explored_tile == 10:
+            self.board[y][x] = 11
+            return None
+        
+        mines = self.mines_close(y, x)
+
+        self.board[y][x] = mines
+
+        if mines == 0:
+            for y_ in range(-1,2):
+                for x_ in range(-1,2):
+                    self.explore(y + y_, x + x_)
     
+    def out_of_bounds(self, y, x):
+        return (y < 0 or y >= self.y or x < 0 or x >= self.x)
+
+    def mines_close(self, y, x):
+        mines = 0
+        for y_ in range(-1,2):
+            for x_ in range(-1,2):
+                check_y = y + y_
+                check_x = x + x_
+                if self.out_of_bounds(y, x):
+                    continue
+                if self.board[check_y][check_x] == 10 or self.board[check_y][check_x] == 11:
+                    mines += 1
+
+    def yx_to_number(self, y, x):
+        return y * self.y + x
+    
+    def number_to_yx(self, number):
+        y = int(number / self.y)
+        x = number - (y * self.y)
+        return [y, x]
+        

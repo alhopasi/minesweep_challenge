@@ -42,38 +42,64 @@ class MinesweepGame:
             self.votes = {}
 
         except FileNotFoundError:
-            self.gameboard = MinesweepBoard(3,3)
-            self.gameboard.create_mines()
-            self.game_running = True
-            self.victory = False
-            self.votes = {}
-            self.save_board('board')
-            self.save_online_board('current_board')
+            self.reset_board(3,3 )
 
+    def reset_board(self, y, x):
+        self.gameboard = MinesweepBoard(y, x)
+        self.gameboard.create_mines()
+        self.game_running = True
+        self.victory = False
+        self.votes = {}
+        self.save_board('board')
+        self.save_online_board('current_board')
+
+    def validate_vote(self, y, x):
+        try:
+            y = int(y)
+            x = int(x)
+        except ValueError:
+            return False
+
+        if self.gameboard.out_of_bounds(y, x):
+            return False
+            
+        return True
 
     def vote(self, y, x, ip):
-        if self.gameboard.is_not_explored(y, x):
-            self.votes[ip] = str(y) + ':' + str(x)
+        if not self.game_running:
+            return None
+        if not self.gameboard.is_explored(y, x):
+            self.votes[ip] = self.gameboard.yx_to_number(y, x)
 
     def play_turn(self):
-        votes_by_y_x = {}
-        for ip_address in self.votes:
-            y_x = self.votes[ip_address]
-            votes_by_y_x[y_x] = votes_by_y_x.get(y_x, 0) + 1
 
-        votes_sorted = dict(sorted(votes_by_y_x.items(), key=lambda item: -item[1]))
+        if not self.game_running:
+            if not self.victory:
+                self.reset_board(self.gameboard.y, self.gameboard.x)
+            else:
+                self.reset_board(self.gameboard.y+1, self.gameboard.x+1)
+            return None
+
+        votes_by_yx = {}
+        for ip_address in self.votes:
+            yx_number = self.votes[ip_address]
+            votes_by_yx[yx_number] = votes_by_yx.get(yx_number, 0) + 1
+
+        votes_sorted = dict(sorted(votes_by_yx.items(), key=lambda item: -item[1]))
 
         explore_amount = self.gameboard.x
-        for y_x in votes_sorted:
+        for yx_number in votes_sorted:
             if explore_amount > 0:
-                y = y_x.split(':')[0]
-                x = y_x.split(':')[1]
+                yx = self.gameboard.number_to_yx(yx_number)
+                y = yx[0]
+                x = yx[1]
                 self.gameboard.explore(y,x)
                 explore_amount -= 1
 
-            
-        # see saved list of votes - explore votes - see game end - save board
-        # explore tiles -> see if game end
+        if self.gameboard.mine_hit():
+            self.game_running = False
+            self.victory = False
+
         self.save_board('board')
         self.save_online_board('current_board')
 

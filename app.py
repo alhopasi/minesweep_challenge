@@ -30,6 +30,9 @@ def get_vote():
     vote_x = request_data['x']
     vote_ip = request.remote_addr
 
+    if not game.validate_vote(vote_y, vote_x):
+        return jsonify(success=False)
+
     game.vote(vote_y, vote_x, vote_ip)
 
     return jsonify(success=True)

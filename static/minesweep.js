@@ -95,23 +95,14 @@ async function loadBoard() {
         table.appendChild(tr)
     }
     document.getElementById("board").appendChild(table);
-    
 
-    //let hexString = '';
-    //        for (let i = 0; i < boardData.length; i++) {
-    //            hexString += boardData[i].toString(16) + ' ';
-    //            if ((i+1) % gameDimension == 0) {
-    //                hexString += "\n"
-    //            }
-    //        }
-    //document.getElementById('board').textContent = hexString
 }
 
 
 async function vote (y, x) {
 
     const vote = {
-        y: y,
+        yz: y,
         x: x
     }
 
