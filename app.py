@@ -26,6 +26,8 @@ def restart():
 @app.route('/vote', methods = ['POST'])
 def get_vote():
     request_data = request.get_json()
+    if not ('y' in request_data and 'x' in request_data):
+        return jsonify(success=False)
     vote_y = request_data['y']
     vote_x = request_data['x']
     vote_ip = request.remote_addr

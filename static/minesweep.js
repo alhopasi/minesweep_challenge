@@ -102,7 +102,7 @@ async function loadBoard() {
 async function vote (y, x) {
 
     const vote = {
-        yz: y,
+        y: y,
         x: x
     }
 
