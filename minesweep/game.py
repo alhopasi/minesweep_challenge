@@ -102,6 +102,14 @@ class MinesweepGame:
         if self.gameboard.check_mine_hit():
             self.game_running = False
             self.victory = False
+        
+        # check victory:
+        # self.game_running = False
+        # self.victory = True
+        # on play_turn: generate new board
+        # seperate check mine hits and results to own function
+        # seperate check victory and results to own function
+
 
         self.save_board('board')
         self.save_online_board('current_board')
@@ -135,7 +143,7 @@ class MinesweepGame:
         byte_1 = first_bytes >> 8
         byte_2 = first_bytes & 255
 
-        bytes_to_save = bytearray(2 + math.ceil(3*3/2))
+        bytes_to_save = bytearray(2 + math.ceil(self.gameboard.x*self.gameboard.y/2))
 
         bytes_to_save[0] = byte_1
         bytes_to_save[1] = byte_2
@@ -177,7 +185,7 @@ class MinesweepGame:
         byte_1 = first_bytes >> 8
         byte_2 = first_bytes & 255
 
-        bytes_to_save = bytearray(2 + math.ceil(3*3/2))
+        bytes_to_save = bytearray(2 + math.ceil(self.gameboard.x*self.gameboard.y/2))
 
         bytes_to_save[0] = byte_1
         bytes_to_save[1] = byte_2
