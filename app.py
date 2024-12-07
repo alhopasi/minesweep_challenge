@@ -3,7 +3,6 @@ from minesweep.game import MinesweepGame
 
 app = Flask(__name__)
 
-
 @app.route('/', methods = ['GET'])
 def index():
     return render_template('index.html')
@@ -17,9 +16,14 @@ def next_turn():
     game.play_turn()
     return jsonify(success=True)
 
+@app.route('/hardreset', methods = ['GET'])
+def restart_hard():
+    game.reset_board(3, 3)
+    return jsonify(success=True)
+
 @app.route('/reset', methods = ['GET'])
 def restart():
-    game = MinesweepGame()
+    game.reset_board(game.gameboard.y, game.gameboard.x)
     return jsonify(success=True)
 
 
@@ -38,5 +42,10 @@ def get_vote():
     game.vote(vote_y, vote_x, vote_ip)
 
     return jsonify(success=True)
+
+
+@app.route('/stats', methods = ['GET'])
+def stats():
+    return jsonify(x=game.gameboard.x, y = game.gameboard.y, board = game.gameboard.board, running = game.game_running, victory = game.victory, votes = game.votes)
 
 game = MinesweepGame()

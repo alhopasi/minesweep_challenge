@@ -40,6 +40,8 @@ class MinesweepBoard:
         if mines == 0:
             for y_ in range(-1,2):
                 for x_ in range(-1,2):
+                    if self.out_of_bounds(y + y_, x + x_):
+                        continue
                     self.explore(y + y_, x + x_)
     
     def out_of_bounds(self, y, x):
@@ -51,10 +53,17 @@ class MinesweepBoard:
             for x_ in range(-1,2):
                 check_y = y + y_
                 check_x = x + x_
-                if self.out_of_bounds(y, x):
+                if self.out_of_bounds(check_y, check_x):
                     continue
-                if self.board[check_y][check_x] == 10 or self.board[check_y][check_x] == 11:
+                if (self.board[check_y][check_x] == 10 or self.board[check_y][check_x] == 11):
                     mines += 1
+        return mines
+    
+    def check_mine_hit(self):
+        for y in range(self.y):
+            for x in range(self.x):
+                if self.board[y][x] == 11: return True
+        return False
 
     def yx_to_number(self, y, x):
         return y * self.y + x

@@ -43,12 +43,20 @@ async function loadBoard() {
     }
 
     var table = document.createElement('table')
-    for (let y = 0; y < gameDimension; y++) {
+    for (let y = -2; y < gameDimension + 2; y++) {
         var tr = document.createElement('tr')
-        for (let x = 0; x < gameDimension; x++) {
+        for (let x = -2; x < gameDimension + 2; x++) {
             var td = document.createElement('td')
             td.classList.add('board_inner')
             var img = document.createElement('img')
+
+            if (x < 0 || x >= gameDimension || y < 0 || y >= gameDimension) {
+                img.src = '/static/images/wall.png'
+                td.appendChild(img)
+                tr.appendChild(td)
+                continue
+            }
+
 
             var value = gameBoardValues[y][x]
             switch (value) {
@@ -88,7 +96,11 @@ async function loadBoard() {
                 case 11:
                     img.src = '/static/images/mine_exp.png'
             }
-            
+
+            img.addEventListener('click', function (e) {
+                vote(y, x)
+              });
+
             td.appendChild(img)
             tr.appendChild(td)
         }

@@ -1,4 +1,5 @@
 from .board import MinesweepBoard
+import math
 
 class MinesweepGame:
     def __init__(self):
@@ -85,6 +86,8 @@ class MinesweepGame:
             yx_number = self.votes[ip_address]
             votes_by_yx[yx_number] = votes_by_yx.get(yx_number, 0) + 1
 
+        self.votes = {}
+
         votes_sorted = dict(sorted(votes_by_yx.items(), key=lambda item: -item[1]))
 
         explore_amount = self.gameboard.x
@@ -96,7 +99,7 @@ class MinesweepGame:
                 self.gameboard.explore(y,x)
                 explore_amount -= 1
 
-        if self.gameboard.mine_hit():
+        if self.gameboard.check_mine_hit():
             self.game_running = False
             self.victory = False
 
@@ -120,7 +123,6 @@ class MinesweepGame:
     # This is: half byte - add 2 tiles together for a byte
 
     def save_board(self, filename):
-        board_file = open(filename, 'wb')
         first_bytes = 0
         game_status = 0
         if self.game_running == False:
@@ -130,30 +132,39 @@ class MinesweepGame:
         first_bytes = self.gameboard.x
         first_bytes = first_bytes << 2
         first_bytes = first_bytes + game_status
-        
-        board_file.write(first_bytes.to_bytes(2))
+        byte_1 = first_bytes >> 8
+        byte_2 = first_bytes & 255
 
+        bytes_to_save = bytearray(2 + math.ceil(3*3/2))
+
+        bytes_to_save[0] = byte_1
+        bytes_to_save[1] = byte_2
+
+        i = 2
+        first_byte = True
         byte_half = 0
         for y in range(self.gameboard.y):
             for x in range(self.gameboard.x):
-                if byte_half != 0:
-                    byte_half = byte_half << 4
-                    byte = byte_half + self.gameboard.board[y][x]
-                    byte_half = 0
-                    board_file.write(byte.to_bytes(1))
-
-                else:
+                if first_byte:
                     byte_half = self.gameboard.board[y][x]
+                    byte_half = byte_half << 4
+                    first_byte = False
                     if (y == self.gameboard.y-1 and x == self.gameboard.x-1):
-                        byte = byte_half << 4
-                        byte = byte + 15
-                        board_file.write(byte.to_bytes(1))
+                        byte = byte_half + 15
+                        bytes_to_save[i] = byte
+                else:
+                    byte = byte_half + self.gameboard.board[y][x]
+                    bytes_to_save[i] = byte
+                    i += 1
+                    first_byte = True
 
+        board_file = open(filename, 'wb')
+        board_file.write(bytes_to_save)
         board_file.close()
 
 
+
     def save_online_board(self, filename):
-        board_file = open(filename, 'wb')
         first_bytes = 0
         game_status = 0
         if self.game_running == False:
@@ -163,9 +174,16 @@ class MinesweepGame:
         first_bytes = self.gameboard.x
         first_bytes = first_bytes << 2
         first_bytes = first_bytes + game_status
-        
-        board_file.write(first_bytes.to_bytes(2))
+        byte_1 = first_bytes >> 8
+        byte_2 = first_bytes & 255
 
+        bytes_to_save = bytearray(2 + math.ceil(3*3/2))
+
+        bytes_to_save[0] = byte_1
+        bytes_to_save[1] = byte_2
+
+        i = 2
+        first_byte = True
         byte_half = 0
         for y in range(self.gameboard.y):
             for x in range(self.gameboard.x):
@@ -173,17 +191,19 @@ class MinesweepGame:
                 if self.game_running == True:
                     if tile == 10: tile = 9
 
-                if byte_half == 0:
+                if first_byte:
                     byte_half = tile
-                    if (y == self.gameboard.y-1 and x == self.gameboard.x-1):
-                        byte = byte_half << 4
-                        byte = byte + 15
-                        board_file.write(byte.to_bytes(1))
-                else:
                     byte_half = byte_half << 4
+                    first_byte = False
+                    if (y == self.gameboard.y-1 and x == self.gameboard.x-1):
+                        byte = byte_half + 15
+                        bytes_to_save[i] = byte
+                else:
                     byte = byte_half + tile
-                    byte_half = 0
-                    board_file.write(byte.to_bytes(1))
+                    bytes_to_save[i] = byte
+                    i += 1
+                    first_byte = True
 
+        board_file = open(filename, 'wb')
+        board_file.write(bytes_to_save)
         board_file.close()
-
