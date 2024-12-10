@@ -110,6 +110,41 @@ async function loadBoard() {
 
 }
 
+const socket = io();  // Connect to the WebSocket server
+
+socket.on('message', function(message) {
+    console.log(message)
+})
+
+
+// Event listener for the open event
+socket.on('open', () => {
+    console.log('Connected to the WebSocket server');
+})
+
+// Event listener for receiving messages
+//socket.addEventListener('message', (event) => {
+//    console.log('Message from server:', event.data);
+    //document.getElementById('response').textContent = 'Server says: ' + event.data;
+//});
+
+// Event listener for error
+socket.addEventListener('error', (event) => {
+    console.error('WebSocket error:', event);
+});
+
+// Event listener for close event
+socket.addEventListener('close', () => {
+    console.log('Disconnected from the WebSocket server');
+});
+
+// Send a message to the server when the button is clicked
+//document.getElementById('sendMessageButton').addEventListener('click', () => {
+//    const message = 'Hello from the client!';
+//    console.log('Sending message:', message);
+//    socket.send(message);
+//});
+
 
 async function vote (y, x) {
 

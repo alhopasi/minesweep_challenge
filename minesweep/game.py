@@ -1,5 +1,7 @@
 from .board import MinesweepBoard
 import math
+import threading
+import time
 
 class MinesweepGame:
     def __init__(self):
@@ -41,11 +43,26 @@ class MinesweepGame:
             else:
                 self.game_running = True; self.victory = False
             self.votes = {}
+            self.start_game_loop()
 
         except FileNotFoundError:
-            self.reset_board(3,3 )
+            self.reset_game(3,3 )
 
-    def reset_board(self, y, x):
+    def game_loop(self):
+        while True:
+            time.sleep(30)
+            self.play_turn()
+            self.save_board('board')
+            self.save_online_board('current_board')
+        
+
+    def start_game_loop(self):
+        loop_thread = threading.Thread(target=self.game_loop)
+        loop_thread.daemon = True
+        loop_thread.start()
+
+
+    def reset_game(self, y, x):
         self.gameboard = MinesweepBoard(y, x)
         self.gameboard.create_mines()
         self.game_running = True
@@ -53,6 +70,7 @@ class MinesweepGame:
         self.votes = {}
         self.save_board('board')
         self.save_online_board('current_board')
+        self.start_game_loop()
 
     def validate_vote(self, y, x):
         try:
@@ -76,9 +94,9 @@ class MinesweepGame:
 
         if not self.game_running:
             if not self.victory:
-                self.reset_board(self.gameboard.y, self.gameboard.x)
+                self.reset_game(self.gameboard.y, self.gameboard.x)
             else:
-                self.reset_board(self.gameboard.y+1, self.gameboard.x+1)
+                self.reset_game(self.gameboard.y+1, self.gameboard.x+1)
             return None
 
         votes_by_yx = {}
@@ -111,8 +129,7 @@ class MinesweepGame:
         # seperate check victory and results to own function
 
 
-        self.save_board('board')
-        self.save_online_board('current_board')
+
 
     # rightmost bits 0-1: game status:
     # 0 = game running

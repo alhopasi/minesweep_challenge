@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, jsonify, send_file
 from minesweep.game import MinesweepGame
+from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 @app.route('/', methods = ['GET'])
 def index():
@@ -18,14 +20,13 @@ def next_turn():
 
 @app.route('/hardreset', methods = ['GET'])
 def restart_hard():
-    game.reset_board(3, 3)
+    game.reset_game(3, 3)
     return jsonify(success=True)
 
 @app.route('/reset', methods = ['GET'])
 def restart():
-    game.reset_board(game.gameboard.y, game.gameboard.x)
+    game.reset_game(game.gameboard.y, game.gameboard.x)
     return jsonify(success=True)
-
 
 @app.route('/vote', methods = ['POST'])
 def get_vote():
@@ -43,9 +44,25 @@ def get_vote():
 
     return jsonify(success=True)
 
-
 @app.route('/stats', methods = ['GET'])
 def stats():
     return jsonify(x=game.gameboard.x, y = game.gameboard.y, board = game.gameboard.board, running = game.game_running, victory = game.victory, votes = game.votes)
 
+
+@socketio.on('connect')
+def handle_connect():
+    print('A client connected')
+
+@socketio.on('message')
+def handle_message(message):
+    print(f"Received message: {message}")
+    # Broadcast the message to all clients except the sender
+    emit('message', message, broadcast=True)
+
+
 game = MinesweepGame()
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
+
+
