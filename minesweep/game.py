@@ -3,134 +3,139 @@ import math
 import threading
 import time
 
+class GameStatus:
+    RUNNING = 0
+    LOSS = 1
+    VICTORY = 2
+
 class MinesweepGame:
     def __init__(self):
+        self.game_loop_thread = None
+        self.game_loop_stop_event = threading.Event()
+
         try:
-            board_file = open('board', 'rb')
-            first_bytes = int.from_bytes(board_file.read(2))
-            board_dimension = first_bytes >> 2
-            game_status = first_bytes & 3
-            data = board_file.read()
-            board_file.close()
-            self.gameboard = MinesweepBoard(board_dimension, board_dimension)
-            y = 0
-            x = 0
-            for i in range(len(data)):
-                byte = data[i]
-                
-                first = byte >> 4
-                second = byte & 15
+            with open('board', 'rb') as board_file:
+                first_bytes = int.from_bytes(board_file.read(2), 'big')
+                board_dimension = first_bytes >> 2
+                game_status = first_bytes & 3
+                data = board_file.read()
 
-                if x >= board_dimension:
-                    y += 1
-                    x = 0
-                self.gameboard.set_value(y, x, first)
-                x += 1
+            self.gameboard = MinesweepBoard(board_dimension)
+            self.set_board_data(data, board_dimension)
 
-                if second == 15:
-                    continue
+            self.game_running, self.victory = self.get_game_status(game_status)
 
-                if x >= board_dimension:
-                    y += 1
-                    x = 0
-                self.gameboard.set_value(y, x, second)
-                x += 1
-
-            if game_status == 1:
-                self.game_running = False; self.victory = False
-            elif game_status == 2:
-                self.game_running = False; self.victory = True
-            else:
-                self.game_running = True; self.victory = False
             self.votes = {}
-            self.start_game_loop()
+            self.game_loop_start()
 
         except FileNotFoundError:
-            self.reset_game(3,3 )
+            self.reset_game(3)
+
+    def set_board_data(self, data, board_dimension):
+        y, x = 0, 0
+        for byte in data:
+            first_half = byte >> 4
+            second_half = byte & 15
+
+            self.gameboard.set_tile_value(y, x, first_half)
+            x = (x + 1) % board_dimension
+            if x == 0:
+                y += 1
+
+            if second_half != 15:
+                self.gameboard.set_tile_value(y, x, second_half)
+                x = (x + 1) % board_dimension
+                if x == 0:
+                    y += 1
+
+    def get_game_status(self, status_code):
+        if status_code == GameStatus.RUNNING:
+            return True, False
+        elif status_code == GameStatus.LOSS:
+            return False, False
+        elif status_code == GameStatus.VICTORY:
+            return False, True
 
     def game_loop(self):
         while True:
-            time.sleep(30)
+            if self.game_loop_stop_event.is_set():
+                break
             self.play_turn()
             self.save_board('board')
             self.save_online_board('current_board')
-        
+            time.sleep(30)
 
-    def start_game_loop(self):
-        loop_thread = threading.Thread(target=self.game_loop)
-        loop_thread.daemon = True
-        loop_thread.start()
+    def game_loop_start(self):
+        if self.game_loop_thread is None or not self.game_loop_thread.is_alive():
+            self.game_loop_stop_event.clear()
+            self.game_loop_thread = threading.Thread(target=self.game_loop)
+            self.game_loop_thread.daemon = True
+            self.game_loop_thread.start()
 
+    def game_loop_stop(self):
+        if self.game_loop_thread and self.game_loop_thread.is_alive():
+            self.game_loop_stop_event.set()
+            self.game_loop_thread.join()
 
-    def reset_game(self, y, x):
-        self.gameboard = MinesweepBoard(y, x)
+    def reset_game(self, board_dimension):
+        self.gameboard = MinesweepBoard(board_dimension)
         self.gameboard.create_mines()
-        self.game_running = True
-        self.victory = False
+        self.game_running, self.victory = True, False
         self.votes = {}
         self.save_board('board')
         self.save_online_board('current_board')
-        self.start_game_loop()
 
     def validate_vote(self, y, x):
         try:
-            y = int(y)
-            x = int(x)
+            y, x = int(y), int(x)
         except ValueError:
             return False
 
-        if self.gameboard.out_of_bounds(y, x):
-            return False
-            
-        return True
+        if self.gameboard.in_bounds(y, x):
+            return True
+
+        return False
 
     def vote(self, y, x, ip):
         if not self.game_running:
             return None
         if not self.gameboard.is_explored(y, x):
-            self.votes[ip] = self.gameboard.yx_to_number(y, x)
+            self.votes[ip] = self.gameboard.coords_to_index(y, x)
 
     def play_turn(self):
-
         if not self.game_running:
-            if not self.victory:
-                self.reset_game(self.gameboard.y, self.gameboard.x)
-            else:
-                self.reset_game(self.gameboard.y+1, self.gameboard.x+1)
+            self.reset_game(self.gameboard.dimension + 1) if self.victory else self.reset_game(self.gameboard.dimension)
             return None
 
-        votes_by_yx = {}
-        for ip_address in self.votes:
-            yx_number = self.votes[ip_address]
-            votes_by_yx[yx_number] = votes_by_yx.get(yx_number, 0) + 1
+        votes_by_index = self.count_votes()
 
         self.votes = {}
 
-        votes_sorted = dict(sorted(votes_by_yx.items(), key=lambda item: -item[1]))
+        votes_sorted = dict(sorted(votes_by_index.items(), key=lambda item: -item[1]))
 
-        explore_amount = self.gameboard.x
-        for yx_number in votes_sorted:
-            if explore_amount > 0:
-                yx = self.gameboard.number_to_yx(yx_number)
-                y = yx[0]
-                x = yx[1]
-                self.gameboard.explore(y,x)
-                explore_amount -= 1
+        self.explore_votes(votes_sorted)
 
         if self.gameboard.check_mine_hit():
-            self.game_running = False
-            self.victory = False
+            self.game_running, self.victory = False, False
         
-        # check victory:
-        # self.game_running = False
-        # self.victory = True
-        # on play_turn: generate new board
-        # seperate check mine hits and results to own function
-        # seperate check victory and results to own function
+        if self.gameboard.check_victory():
+            self.game_running, self.victory = False, True
 
+    def count_votes(self):
+        votes_by_index = {}
+        for ip_address in self.votes:
+            index = self.votes[ip_address]
+            votes_by_index[index] = votes_by_index.get(index, 0) + 1
+        return votes_by_index
 
-
-
+    def explore_votes(self, votes):
+        explore_amount = self.gameboard.dimension
+        for yx_number in votes:
+            if explore_amount > 0:
+                y, x = self.gameboard.index_to_coords(yx_number)
+                self.gameboard.explore(y,x)
+                explore_amount -= 1
+    
     # rightmost bits 0-1: game status:
     # 0 = game running
     # 1 = game stopped, loss
@@ -145,82 +150,38 @@ class MinesweepGame:
     # 10 = mine, not explored
     # 11 = mine, explored
     # 15 skip
-    # This is: half byte - add 2 tiles together for a byte
+    # This is: half byte (4 bits) - add 2 tiles together for a byte
 
     def save_board(self, filename):
-        first_bytes = 0
-        game_status = 0
-        if self.game_running == False:
-            if self.victory == False:
-                game_status = 1
-            else: game_status = 2
-        first_bytes = self.gameboard.x
-        first_bytes = first_bytes << 2
-        first_bytes = first_bytes + game_status
-        byte_1 = first_bytes >> 8
-        byte_2 = first_bytes & 255
-
-        bytes_to_save = bytearray(2 + math.ceil(self.gameboard.x*self.gameboard.y/2))
-
-        bytes_to_save[0] = byte_1
-        bytes_to_save[1] = byte_2
-
-        i = 2
-        first_byte = True
-        byte_half = 0
-        for y in range(self.gameboard.y):
-            for x in range(self.gameboard.x):
-                if first_byte:
-                    byte_half = self.gameboard.board[y][x]
-                    byte_half = byte_half << 4
-                    first_byte = False
-                    if (y == self.gameboard.y-1 and x == self.gameboard.x-1):
-                        byte = byte_half + 15
-                        bytes_to_save[i] = byte
-                else:
-                    byte = byte_half + self.gameboard.board[y][x]
-                    bytes_to_save[i] = byte
-                    i += 1
-                    first_byte = True
-
-        board_file = open(filename, 'wb')
-        board_file.write(bytes_to_save)
-        board_file.close()
-
-
+        bytes_to_save = self.create_board_bytes()
+        with open(filename, 'wb') as board_file:
+            board_file.write(bytes_to_save)
 
     def save_online_board(self, filename):
-        first_bytes = 0
-        game_status = 0
-        if self.game_running == False:
-            if self.victory == False:
-                game_status = 1
-            else: game_status = 2
-        first_bytes = self.gameboard.x
-        first_bytes = first_bytes << 2
-        first_bytes = first_bytes + game_status
+        bytes_to_save = self.create_board_bytes(save_online=True)
+        with open(filename, 'wb') as board_file:
+            board_file.write(bytes_to_save)
+
+    def create_board_bytes(self, save_online=False):
+        first_bytes = (self.gameboard.dimension << 2) + (GameStatus.RUNNING if self.game_running else GameStatus.VICTORY if self.victory else GameStatus.LOSS)
         byte_1 = first_bytes >> 8
         byte_2 = first_bytes & 255
 
-        bytes_to_save = bytearray(2 + math.ceil(self.gameboard.x*self.gameboard.y/2))
-
+        bytes_to_save = bytearray(2 + math.ceil(self.gameboard.dimension * self.gameboard.dimension / 2))
         bytes_to_save[0] = byte_1
         bytes_to_save[1] = byte_2
 
-        i = 2
-        first_byte = True
-        byte_half = 0
-        for y in range(self.gameboard.y):
-            for x in range(self.gameboard.x):
+        i, first_byte, byte_half = 2, True, 0
+        for y in range(self.gameboard.dimension):
+            for x in range(self.gameboard.dimension):
                 tile = self.gameboard.board[y][x]
-                if self.game_running == True:
-                    if tile == 10: tile = 9
+                if self.game_running and save_online and tile == 10:
+                    tile = 9
 
                 if first_byte:
-                    byte_half = tile
-                    byte_half = byte_half << 4
+                    byte_half = tile << 4
                     first_byte = False
-                    if (y == self.gameboard.y-1 and x == self.gameboard.x-1):
+                    if (y == self.gameboard.dimension-1 and x == self.gameboard.dimension-1):
                         byte = byte_half + 15
                         bytes_to_save[i] = byte
                 else:
@@ -228,7 +189,4 @@ class MinesweepGame:
                     bytes_to_save[i] = byte
                     i += 1
                     first_byte = True
-
-        board_file = open(filename, 'wb')
-        board_file.write(bytes_to_save)
-        board_file.close()
+        return bytes_to_save

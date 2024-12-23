@@ -20,12 +20,12 @@ def next_turn():
 
 @app.route('/hardreset', methods = ['GET'])
 def restart_hard():
-    game.reset_game(3, 3)
+    game.reset_game(3)
     return jsonify(success=True)
 
 @app.route('/reset', methods = ['GET'])
 def restart():
-    game.reset_game(game.gameboard.y, game.gameboard.x)
+    game.reset_game(game.gameboard.dimension)
     return jsonify(success=True)
 
 @app.route('/vote', methods = ['POST'])
@@ -33,9 +33,7 @@ def get_vote():
     request_data = request.get_json()
     if not ('y' in request_data and 'x' in request_data):
         return jsonify(success=False)
-    vote_y = request_data['y']
-    vote_x = request_data['x']
-    vote_ip = request.remote_addr
+    vote_y, vote_x, vote_ip = request_data['y'], request_data['x'], request.remote_addr
 
     if not game.validate_vote(vote_y, vote_x):
         return jsonify(success=False)
@@ -46,7 +44,7 @@ def get_vote():
 
 @app.route('/stats', methods = ['GET'])
 def stats():
-    return jsonify(x=game.gameboard.x, y = game.gameboard.y, board = game.gameboard.board, running = game.game_running, victory = game.victory, votes = game.votes)
+    return jsonify(dimension = game.gameboard.dimension, board = game.gameboard.board, running = game.game_running, victory = game.victory, votes = game.votes)
 
 
 @socketio.on('connect')
