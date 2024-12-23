@@ -78,12 +78,16 @@ class MinesweepGame:
             self.game_loop_thread.join()
 
     def reset_game(self, board_dimension):
+        self.game_loop_stop()
+
         self.gameboard = MinesweepBoard(board_dimension)
         self.gameboard.create_mines()
         self.game_running, self.victory = True, False
         self.votes = {}
         self.save_board('board')
         self.save_online_board('current_board')
+
+        self.game_loop_start()
 
     def validate_vote(self, y, x):
         try:
