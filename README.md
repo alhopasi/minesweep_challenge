@@ -8,12 +8,9 @@ docker-compose up -w
 
 
 Required:
-- draw border tiles on board
-- clickable tiles to front to vote which tile to flip
-- timer to update board status
-- voting to select which tiles to flip
-- when flipping a '0' tile, flip those around it -> repeat until no more 0'es.
-- when flipping a mine -> end game -> display all mines and those that were flipped -> generate new game on next update
+- timer to update board status (needs more testing that threading works correctly)
+- use websockets to update game status online
+- send only changed data, not whole board - functions to update only changed data.
 
 Nice to have:
 - history of earlier games

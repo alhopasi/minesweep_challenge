@@ -95,7 +95,7 @@ class MinesweepGame:
         except ValueError:
             return False
 
-        if self.gameboard.in_bounds(y, x):
+        if self.gameboard.in_bounds(y, x) and not self.gameboard.is_explored(y, x):
             return True
 
         return False
