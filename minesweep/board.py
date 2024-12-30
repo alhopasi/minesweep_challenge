@@ -21,6 +21,10 @@ class MinesweepBoard:
                 if self.board[mine_y][mine_x] != Tile.MINE:
                     self.board[mine_y][mine_x] = Tile.MINE
                     break
+    
+    def reset_board(self, dimension):
+        self.dimension = dimension
+        self.board = [ [Tile.NOT_EXPLORED] * self.dimension for _ in range(self.dimension) ]
 
     def set_tile_value(self, y, x, value):
         self.board[y][x] = value

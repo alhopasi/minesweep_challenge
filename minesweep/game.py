@@ -11,7 +11,6 @@ class GameStatus:
 class MinesweepGame:
     def __init__(self):
         self.game_loop_thread = None
-        self.game_loop_stop_event = threading.Event()
 
         try:
             with open('board', 'rb') as board_file:
@@ -22,14 +21,13 @@ class MinesweepGame:
 
             self.gameboard = MinesweepBoard(board_dimension)
             self.set_board_data(data, board_dimension)
-
             self.game_running, self.victory = self.get_game_status(game_status)
-
             self.votes = {}
-            self.game_loop_start()
 
         except FileNotFoundError:
             self.reset_game(3)
+        
+        self.game_loop_start()
 
     def set_board_data(self, data, board_dimension):
         y, x = 0, 0
@@ -58,8 +56,6 @@ class MinesweepGame:
 
     def game_loop(self):
         while True:
-            if self.game_loop_stop_event.is_set():
-                break
             self.play_turn()
             self.save_board('board')
             self.save_online_board('current_board')
@@ -67,27 +63,18 @@ class MinesweepGame:
 
     def game_loop_start(self):
         if self.game_loop_thread is None or not self.game_loop_thread.is_alive():
-            self.game_loop_stop_event.clear()
             self.game_loop_thread = threading.Thread(target=self.game_loop)
             self.game_loop_thread.daemon = True
             self.game_loop_thread.start()
 
-    def game_loop_stop(self):
-        if self.game_loop_thread and self.game_loop_thread.is_alive():
-            self.game_loop_stop_event.set()
-            self.game_loop_thread.join()
-
     def reset_game(self, board_dimension):
-        self.game_loop_stop()
-
-        self.gameboard = MinesweepBoard(board_dimension)
+        if self.gameboard is None:
+            self.gameboard = MinesweepBoard(3)
+        else:
+            self.gameboard.reset_board(board_dimension)
         self.gameboard.create_mines()
         self.game_running, self.victory = True, False
         self.votes = {}
-        self.save_board('board')
-        self.save_online_board('current_board')
-
-        self.game_loop_start()
 
     def validate_vote(self, y, x):
         try:
@@ -112,10 +99,8 @@ class MinesweepGame:
             return None
 
         votes_by_index = self.count_votes()
-
-        self.votes = {}
-
         votes_sorted = dict(sorted(votes_by_index.items(), key=lambda item: -item[1]))
+        self.votes = {}
 
         self.explore_votes(votes_sorted)
 
