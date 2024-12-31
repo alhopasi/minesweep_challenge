@@ -8,6 +8,11 @@
 </head>
 
 <body>
+    <div>
+        <span>Click on a tile to vote for that tile to be explored<BR></span>
+        <span>Explore all safe tiles<BR></span>
+    </div>
+    <div><span>-- </span><span id="timer"></span><span> --</span></div>
     <div id="board"></div>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="{{url_for('static', filename='minesweep.js')}}"></script>

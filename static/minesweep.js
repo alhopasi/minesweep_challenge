@@ -1,11 +1,5 @@
 
-async function loadBoard() {
-    const res = await fetch('/board', {
-        headers: {
-            'Cache-Control': 'no-cache'
-        }
-    })
-    const arrayBuffer = await res.arrayBuffer()
+function buildBoardFromData(arrayBuffer) {
     const data = new Uint8Array(arrayBuffer)
     const dataView = new DataView(arrayBuffer)
     const boardData = data.slice(2)
@@ -43,6 +37,7 @@ async function loadBoard() {
     }
 
     var table = document.createElement('table')
+    table.setAttribute('id', 'board_table')
     for (let y = -2; y < gameDimension + 2; y++) {
         var tr = document.createElement('tr')
         for (let x = -2; x < gameDimension + 2; x++) {
@@ -56,7 +51,6 @@ async function loadBoard() {
                 tr.appendChild(td)
                 continue
             }
-
 
             var value = gameBoardValues[y][x]
             switch (value) {
@@ -98,7 +92,9 @@ async function loadBoard() {
             }
 
             img.addEventListener('click', function (e) {
-                vote(y, x)
+                if ( gameStatus == 0) {
+                    socket.send(y + " " + x)
+                }
               });
 
             td.appendChild(img)
@@ -106,14 +102,55 @@ async function loadBoard() {
         }
         table.appendChild(tr)
     }
-    document.getElementById("board").appendChild(table);
-
+    if ( document.getElementById("board").hasChildNodes() ) {
+        document.getElementById("board").replaceChild(table, document.getElementById("board").firstChild);
+    } else {
+        document.getElementById("board").appendChild(table);
+    }
+    document.getElementById("board").style.marginLeft = parseInt((window.innerWidth - ((gameDimension + 4) * 16)) / 2) + 'px'
 }
+
+window.onresize = () => {
+    document.getElementById("board").style.marginLeft = parseInt((window.innerWidth - document.getElementById("board_table").offsetWidth) / 2) + 'px'
+}
+
+async function loadBoard() {
+    const res = await fetch('/board', {
+        headers: {
+            'Cache-Control': 'no-cache'
+        }
+    })
+    const arrayBuffer = await res.arrayBuffer()
+    buildBoardFromData(arrayBuffer)
+}
+
+var timer = 30, minutes, seconds;
+
+function startTimer(duration, display) {
+    setInterval( () => {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            timer = duration;
+        }
+    }, 1000);
+}
+window.onload = () => {
+    startTimer(29, document.getElementById("timer"));
+}
+
 
 const socket = io();  // Connect to the WebSocket server
 
-socket.on('message', function(message) {
-    console.log(message)
+socket.on('message', (data) => {
+    buildBoardFromData(data)
+    timer = 29
 })
 
 
@@ -145,22 +182,5 @@ socket.addEventListener('close', () => {
 //    socket.send(message);
 //});
 
-
-async function vote (y, x) {
-
-    const vote = {
-        y: y,
-        x: x
-    }
-
-    const response = await fetch('http://localhost:8000/vote', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json; charset=utf-8'
-    },
-    body: JSON.stringify(vote)
-    })
-
-}
 
 loadBoard()

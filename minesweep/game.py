@@ -1,7 +1,5 @@
 from .board import MinesweepBoard
 import math
-import threading
-import time
 
 class GameStatus:
     RUNNING = 0
@@ -10,8 +8,6 @@ class GameStatus:
 
 class MinesweepGame:
     def __init__(self):
-        self.game_loop_thread = None
-
         try:
             with open('board', 'rb') as board_file:
                 first_bytes = int.from_bytes(board_file.read(2), 'big')
@@ -27,7 +23,7 @@ class MinesweepGame:
         except FileNotFoundError:
             self.reset_game(3)
         
-        self.game_loop_start()
+        self.send_data = False
 
     def set_board_data(self, data, board_dimension):
         y, x = 0, 0
@@ -53,19 +49,6 @@ class MinesweepGame:
             return False, False
         elif status_code == GameStatus.VICTORY:
             return False, True
-
-    def game_loop(self):
-        while True:
-            self.play_turn()
-            self.save_board('board')
-            self.save_online_board('current_board')
-            time.sleep(30)
-
-    def game_loop_start(self):
-        if self.game_loop_thread is None or not self.game_loop_thread.is_alive():
-            self.game_loop_thread = threading.Thread(target=self.game_loop)
-            self.game_loop_thread.daemon = True
-            self.game_loop_thread.start()
 
     def reset_game(self, board_dimension):
         if self.gameboard is None:
@@ -96,8 +79,12 @@ class MinesweepGame:
     def play_turn(self):
         if not self.game_running:
             self.reset_game(self.gameboard.dimension + 1) if self.victory else self.reset_game(self.gameboard.dimension)
+            self.send_data = True
             return None
 
+        if not self.votes:
+            return None
+        
         votes_by_index = self.count_votes()
         votes_sorted = dict(sorted(votes_by_index.items(), key=lambda item: -item[1]))
         self.votes = {}
@@ -109,6 +96,8 @@ class MinesweepGame:
         
         if self.gameboard.check_victory():
             self.game_running, self.victory = False, True
+        
+        self.send_data = True
 
     def count_votes(self):
         votes_by_index = {}
@@ -140,6 +129,9 @@ class MinesweepGame:
     # 11 = mine, explored
     # 15 skip
     # This is: half byte (4 bits) - add 2 tiles together for a byte
+
+    def online_data(self):
+        return self.create_board_bytes(save_online=True)
 
     def save_board(self, filename):
         bytes_to_save = self.create_board_bytes()

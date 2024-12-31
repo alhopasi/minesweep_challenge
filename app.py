@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from minesweep.game import MinesweepGame
+from minesweep.game_handler import GameHandler
 from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')
 
 @app.route('/', methods = ['GET'])
 def index():
@@ -38,7 +38,7 @@ def get_vote():
     if not game.validate_vote(vote_y, vote_x):
         return jsonify(success=False)
 
-    game.vote(vote_y, vote_x, vote_ip)
+    #game.vote(vote_y, vote_x, vote_ip)
 
     return jsonify(success=True)
 
@@ -53,12 +53,16 @@ def handle_connect():
 
 @socketio.on('message')
 def handle_message(message):
-    print(f"Received message: {message}")
-    # Broadcast the message to all clients except the sender
-    emit('message', message, broadcast=True)
+    vote_y, vote_x = message.split(" ")
+    if not game.validate_vote(vote_y, vote_x):
+        return None
+    vote_y, vote_x = int(vote_y), int(vote_x)
+    vote_ip = request.remote_addr
 
+    game.vote(vote_y, vote_x, vote_ip)
 
-game = MinesweepGame()
+game_handler = GameHandler(socketio)
+game = game_handler.game
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
