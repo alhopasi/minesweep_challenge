@@ -148,22 +148,16 @@ window.onload = () => {
 
 const socket = io();  // Connect to the WebSocket server
 
+// when receiving message, apply changes to board and reset timer
 socket.on('message', (data) => {
     buildBoardFromData(data)
     timer = 29
 })
 
-
 // Event listener for the open event
 socket.on('open', () => {
     console.log('Connected to the WebSocket server');
 })
-
-// Event listener for receiving messages
-//socket.addEventListener('message', (event) => {
-//    console.log('Message from server:', event.data);
-    //document.getElementById('response').textContent = 'Server says: ' + event.data;
-//});
 
 // Event listener for error
 socket.addEventListener('error', (event) => {
@@ -174,13 +168,6 @@ socket.addEventListener('error', (event) => {
 socket.addEventListener('close', () => {
     console.log('Disconnected from the WebSocket server');
 });
-
-// Send a message to the server when the button is clicked
-//document.getElementById('sendMessageButton').addEventListener('click', () => {
-//    const message = 'Hello from the client!';
-//    console.log('Sending message:', message);
-//    socket.send(message);
-//});
 
 
 loadBoard()

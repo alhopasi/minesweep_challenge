@@ -21,6 +21,7 @@ class MinesweepGame:
             self.votes = {}
 
         except FileNotFoundError:
+            self.gameboard = None
             self.reset_game(3)
         
         self.send_data = False

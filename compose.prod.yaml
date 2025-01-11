@@ -1,0 +1,16 @@
+version: '3'
+services:
+  flask_app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ./app.py:/code/app.py
+      - ./minesweep:/code/minesweep
+      - ./templates:/code/templates
+      - ./static:/code/static
+    ports:
+      - "80:80"
+    environment:
+      - FLASK_ENV=production
+
