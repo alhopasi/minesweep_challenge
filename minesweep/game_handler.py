@@ -11,7 +11,7 @@ class GameHandler:
         self.next_game_loop = self.time_now_ms() + 30000
         self.game_loop_start()
 
-    def time_now_ms():
+    def time_now_ms(self):
         return int(time.time() * 1000)
 
     def game_loop_start(self):
@@ -24,7 +24,7 @@ class GameHandler:
         while True:
             if self.time_now_ms() > self.next_game_loop:
                 self.next_game_loop = self.time_now_ms() + 30000
-                
+
                 self.game.play_turn()
                 self.game.save_board('/data/board')
                 self.game.save_online_board('/data/online/board')
