@@ -27,12 +27,12 @@ Online version running in https://theminesweep.com
 
 #### Development ####
 Required:
-- database for the data. Now on docker container update (new version), the old data gets wiped with the container. On service startup, connect to database if ENV_DATABASE is set, download the latest board. (data for latest - and history)
 - show on gui which tile you voted (tint color slightly?)
 
 Nice to have:
 - better timer to update board status (better way to implement?) - send timer info with data, whenever data is sent?
 - when loading page - load whole board with a HTTP request. When updating board - only update changes with websockets. When reset (victory or loss) - update whole board with websocket
+- send info how many votes was sent on previous tick
 - nicer gui
 - history of earlier games
 - login system for users to keep track of: how many times voted, how many mines stepped into, at what level joined
@@ -40,6 +40,7 @@ Nice to have:
 
 Info:
 - Development environment uses Docker volumes for source code to load from, making easy changes possible, not needing to build the whole container
-- Production environment has all source code bundled in the Docker container. This is for deploying using Container services that do not include OS (such as AWS ECS)
+- Production environment has all source code bundled in the Docker container.
+- ./data and ./data/online are used as volumes for persistent storage to save board data.
 
 Minesweeper Tiles from https://kerkday.itch.io/minesweeper-tiles

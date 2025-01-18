@@ -12,7 +12,8 @@ class MinesweepBoard:
         self.board = [ [Tile.NOT_EXPLORED] * self.dimension for _ in range(self.dimension) ]
 
     def create_mines(self):
-        mines = round(self.dimension * self.dimension * random.uniform(0.15, 0.21))
+        mines = round(self.dimension * self.dimension * random.uniform(0.16, 0.22))
+        if mines == 0: mines = 1
 
         for _ in range(mines):
             while True:
