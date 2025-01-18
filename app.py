@@ -11,7 +11,7 @@ def index():
 
 @app.route('/board', methods = ['GET'])
 def post_board():
-    return send_file('current_board', mimetype='application/octet-stream')
+    return send_file('/data/online/board', mimetype='application/octet-stream')
 
 @app.route('/play', methods = ['GET'])
 def next_turn():
@@ -35,7 +35,7 @@ def stats():
 
 @socketio.on('connect')
 def handle_connect():
-    print('A client connected', flush=True)
+    None
 
 @socketio.on('message')
 def handle_message(message):
@@ -44,9 +44,6 @@ def handle_message(message):
         return None
     vote_y, vote_x = int(vote_y), int(vote_x)
     vote_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
-    print("header X-Forwarded-For: " + str(request.headers), flush=True)
-    print("request.remote_addr: " + str(request.remote_addr), flush=True)
-
 
     game.vote(vote_y, vote_x, vote_ip)
 

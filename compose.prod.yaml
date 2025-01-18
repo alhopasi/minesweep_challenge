@@ -5,10 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     volumes:
-      - ./app.py:/code/app.py
-      - ./minesweep:/code/minesweep
-      - ./templates:/code/templates
-      - ./static:/code/static
+      - ./data:/data
+      - ./data/online:/data/online
     ports:
       - "80:80"
     environment:

@@ -10,7 +10,7 @@ class GameStatus:
 class MinesweepGame:
     def __init__(self):
         try:
-            with open('board', 'rb') as board_file:
+            with open('/data/board', 'rb') as board_file:
                 first_bytes = int.from_bytes(board_file.read(2), 'big')
                 board_dimension = first_bytes >> 2
                 game_status = first_bytes & 3
@@ -92,13 +92,12 @@ class MinesweepGame:
                 final_votes_sorted.extend(indexes_with_same_vote_amount)
                 indexes_with_same_vote_amount = []
                 previous_vote_amount = vote_amount
-            else:
-                indexes_with_same_vote_amount.append(index)
+            indexes_with_same_vote_amount.append(index)
 
         random.shuffle(indexes_with_same_vote_amount)
         final_votes_sorted.extend(indexes_with_same_vote_amount)
 
-        return dict(final_votes_sorted)
+        return final_votes_sorted
 
     def play_turn(self):
         if not self.game_running:

@@ -18,8 +18,8 @@ class GameHandler:
     def game_loop(self):
         while True:
             self.game.play_turn()
-            self.game.save_board('board')
-            self.game.save_online_board('current_board')
+            self.game.save_board('/data/board')
+            self.game.save_online_board('/data/online/board')
             if self.game.send_data:
                 self.socketio.send(bytes(self.game.online_data()))
                 self.game.send_data = False
