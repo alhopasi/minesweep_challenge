@@ -1,5 +1,6 @@
 from .board import MinesweepBoard
 import math
+import random
 
 class GameStatus:
     RUNNING = 0
@@ -77,6 +78,28 @@ class MinesweepGame:
         if not self.gameboard.is_explored(y, x):
             self.votes[ip] = self.gameboard.coords_to_index(y, x)
 
+    def sort_by_votes(self, votes_by_index):
+        votes_initial_sort = sorted(votes_by_index.items(), key=lambda item: -item[1])
+
+        final_votes_sorted = []
+
+        indexes_with_same_vote_amount = []
+        previous_vote_amount = None
+
+        for index, vote_amount in votes_initial_sort:
+            if vote_amount != previous_vote_amount:
+                random.shuffle(indexes_with_same_vote_amount)
+                final_votes_sorted.extend(indexes_with_same_vote_amount)
+                indexes_with_same_vote_amount = []
+                previous_vote_amount = vote_amount
+            else:
+                indexes_with_same_vote_amount.append(index)
+
+        random.shuffle(indexes_with_same_vote_amount)
+        final_votes_sorted.extend(indexes_with_same_vote_amount)
+
+        return dict(final_votes_sorted)
+
     def play_turn(self):
         if not self.game_running:
             self.reset_game(self.gameboard.dimension + 1) if self.victory else self.reset_game(self.gameboard.dimension)
@@ -87,7 +110,7 @@ class MinesweepGame:
             return None
         
         votes_by_index = self.count_votes()
-        votes_sorted = dict(sorted(votes_by_index.items(), key=lambda item: -item[1]))
+        votes_sorted = self.sort_by_votes(votes_by_index)
         self.votes = {}
 
         self.explore_votes(votes_sorted)
