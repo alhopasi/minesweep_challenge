@@ -28,10 +28,10 @@ Online version running in https://theminesweep.com
 #### Development ####
 Required:
 - show on gui which tile you voted (tint color slightly?)
+- when hitting mine or winning, also send only changed data to server, not whole board.
 
 Nice to have:
 - better timer to update board status (better way to implement?) - send timer info with data, whenever data is sent?
-- when loading page - load whole board with a HTTP request. When updating board - only update changes with websockets. When reset (victory or loss) - update whole board with websocket
 - send info how many votes was sent on previous tick
 - nicer gui
 - history of earlier games

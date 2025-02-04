@@ -1,14 +1,25 @@
+var gameStatus
 
-function buildBoardFromData(arrayBuffer) {
-    const data = new Uint8Array(arrayBuffer)
+function parseData(arrayBuffer) {
     const dataView = new DataView(arrayBuffer)
-    const boardData = data.slice(2)
-
-    // load 14 leftmost bits as gameDimension and 2 rightmost bits as gameStatus
-    const gameData = dataView.getUint16(0)
-    const gameDimension = gameData >> 2
-    const gameStatus = gameData & 3
     
+    // load 13 leftmost bits as gameDimension and 3 rightmost bits as gameStatus
+    const gameData = dataView.getUint16(0)
+    const gameDimension = gameData >> 3
+    gameStatus = gameData & 7
+
+    const data = new Uint8Array(arrayBuffer)
+    const boardData = data.slice(2)
+    
+    if (document.getElementById("board_table") == null || gameStatus > 0) {
+        buildBoardFromData(boardData, gameDimension)
+    } else {
+        updateBoardFromData(boardData, gameDimension)
+    }
+}
+
+function buildBoardFromData(boardData, gameDimension) {
+
     let y = 0
     let x = 0
 
@@ -43,9 +54,9 @@ function buildBoardFromData(arrayBuffer) {
         for (let x = -2; x < gameDimension + 2; x++) {
             var td = document.createElement('td')
             td.classList.add('board_inner')
-            var img = document.createElement('img')
 
             if (x < 0 || x >= gameDimension || y < 0 || y >= gameDimension) {
+                var img = document.createElement('img')
                 img.src = '/static/images/wall.png'
                 td.appendChild(img)
                 tr.appendChild(td)
@@ -53,51 +64,16 @@ function buildBoardFromData(arrayBuffer) {
             }
 
             var value = gameBoardValues[y][x]
-            switch (value) {
-                case 0:
-                    img.src = '/static/images/empty.png'
-                    break
-                case 1:
-                    img.src = '/static/images/1.png'
-                    break
-                case 2:
-                    img.src = '/static/images/2.png'
-                    break
-                case 3:
-                    img.src = '/static/images/3.png'
-                    break
-                case 4:
-                    img.src = '/static/images/4.png'
-                    break
-                case 5:
-                    img.src = '/static/images/5.png'
-                    break
-                case 6:
-                    img.src = '/static/images/6.png'
-                    break
-                case 7:
-                    img.src = '/static/images/7.png'
-                    break
-                case 8:
-                    img.src = '/static/images/8.png'
-                    break
-                case 9:
-                    img.src = '/static/images/unknown.png'
-                    break
-                case 10:
-                    img.src = '/static/images/mine.png'
-                    break
-                case 11:
-                    img.src = '/static/images/mine_exp.png'
-            }
+            var img = setImage(value)
 
             img.addEventListener('click', function (e) {
-                if ( gameStatus == 0) {
+                if ( gameStatus == 0 || gameStatus == 3) {
                     socket.send(y + " " + x)
                 }
               });
 
             td.appendChild(img)
+            td.setAttribute('id', "tile" + parseInt(y*gameDimension + x))
             tr.appendChild(td)
         }
         table.appendChild(tr)
@@ -108,6 +84,48 @@ function buildBoardFromData(arrayBuffer) {
         document.getElementById("board").appendChild(table);
     }
     document.getElementById("board").style.marginLeft = parseInt((window.innerWidth - ((gameDimension + 4) * 16)) / 2) + 'px'
+}
+
+function setImage(tileValue) {
+    var img = document.createElement('img')
+    switch (tileValue) {
+        case 0:
+            img.src = '/static/images/empty.png'
+            break
+        case 1:
+            img.src = '/static/images/1.png'
+            break
+        case 2:
+            img.src = '/static/images/2.png'
+            break
+        case 3:
+            img.src = '/static/images/3.png'
+            break
+        case 4:
+            img.src = '/static/images/4.png'
+            break
+        case 5:
+            img.src = '/static/images/5.png'
+            break
+        case 6:
+            img.src = '/static/images/6.png'
+            break
+        case 7:
+            img.src = '/static/images/7.png'
+            break
+        case 8:
+            img.src = '/static/images/8.png'
+            break
+        case 9:
+            img.src = '/static/images/unknown.png'
+            break
+        case 10:
+            img.src = '/static/images/mine.png'
+            break
+        case 11:
+            img.src = '/static/images/mine_exp.png'
+    }
+    return img
 }
 
 window.onresize = () => {
@@ -121,7 +139,39 @@ async function loadBoard() {
         }
     })
     const arrayBuffer = await res.arrayBuffer()
-    buildBoardFromData(arrayBuffer)
+    parseData(arrayBuffer)
+}
+
+function updateBoardFromData(boardData, gameDimension) {
+    const tileNumberBytes = calculateBytesNeeded(gameDimension)
+    var tileNumber = 0
+    var byteNumber = 0
+
+    for (let i = 0; i < boardData.length; i++) {
+        
+        if (byteNumber < tileNumberBytes) {
+            tileNumber = tileNumber << 8
+            tileNumber = tileNumber + boardData[i + byteNumber]
+            byteNumber += 1
+            continue
+        } else {
+            var td = document.getElementById("tile" + parseInt(tileNumber))
+            td.removeChild(td.firstChild)
+            var img = setImage(boardData[i])
+            td.appendChild(img)
+            tileNumber = 0
+            byteNumber = 0
+        }
+    }
+}
+
+function calculateBytesNeeded(gameDimension) {
+    var result = 0
+    while (gameDimension > 1) {
+        gameDimension = gameDimension / 16
+        result += 1
+    }
+    return result
 }
 
 var timer = 30, minutes, seconds;
@@ -150,7 +200,7 @@ const socket = io();  // Connect to the WebSocket server
 
 // when receiving message, apply changes to board and reset timer
 socket.on('message', (data) => {
-    buildBoardFromData(data)
+    parseData(data)
     timer = 29
 })
 

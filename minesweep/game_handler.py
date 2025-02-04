@@ -31,4 +31,6 @@ class GameHandler:
                 if self.game.send_data:
                     self.socketio.send(bytes(self.game.online_data()))
                     self.game.send_data = False
-            time.sleep(0.5)
+                self.game.new_board = False
+                self.game.gameboard.explored = []
+            time.sleep(0.2)
