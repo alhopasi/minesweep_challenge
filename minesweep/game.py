@@ -22,7 +22,7 @@ class MinesweepGame:
             self.game_running, self.victory, self.new_board = self.get_game_status(game_status)
             self.votes = {}
 
-        except FileNotFoundError:
+        except:
             self.gameboard = None
             self.reset_game(3)
         

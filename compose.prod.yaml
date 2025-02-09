@@ -6,7 +6,6 @@ services:
       dockerfile: Dockerfile.prod
     volumes:
       - ./data:/data
-      - ./data/online:/data/online
     ports:
       - "80:80"
     environment:
