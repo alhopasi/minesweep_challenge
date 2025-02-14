@@ -63,6 +63,8 @@ class MinesweepGame:
         self.gameboard.create_mines()
         self.game_running, self.victory, self.new_board = True, False, True
         self.votes = {}
+        self.save_board('/data/board')
+        self.save_online_board('/data/online/board')
 
     def validate_vote(self, y, x):
         try:
@@ -122,6 +124,9 @@ class MinesweepGame:
         
         if self.gameboard.check_victory():
             self.game_running, self.victory = False, True
+        
+        if self.game_running == False:
+            self.gameboard.set_mines_as_explored()
 
         self.send_data = True
 
@@ -133,7 +138,7 @@ class MinesweepGame:
         return votes_by_index
 
     def explore_votes(self, votes):
-        explore_amount = self.gameboard.dimension
+        explore_amount = -(self.gameboard.dimension // -4)
         for yx_number in votes:
             if explore_amount > 0:
                 y, x = self.gameboard.index_to_coords(yx_number)
@@ -159,7 +164,7 @@ class MinesweepGame:
     # This is: half byte (4 bits) - add 2 tiles together for a byte
 
     def online_data(self):
-        if not self.game_running or self.new_board:
+        if self.new_board:
             return self.create_board_bytes(save_online=True)
         else: return self.update_board()
 
@@ -189,15 +194,16 @@ class MinesweepGame:
         bytes_to_save[0] = byte_1
         bytes_to_save[1] = byte_2
 
-        for i in range(len(self.gameboard.explored)):
-            value = self.gameboard.explored[i]
+        i = 0
+        for exploredIndex in self.gameboard.explored:
+            y, x = self.gameboard.index_to_coords(exploredIndex)
             for j in range(bytesNeededForTileValue):
-                byte = value & 255
+                byte = exploredIndex & 255
                 bytes_to_save[i*(bytesNeededForTileValue + 1) + j + 2] = byte
-                value = value >> 8
-            y, x = self.gameboard.index_to_coords(self.gameboard.explored[i])
+                exploredIndex = exploredIndex >> 8
             bytes_to_save[i*(bytesNeededForTileValue + 1) + bytesNeededForTileValue + 2] = self.gameboard.board[y][x]
-        
+            i += 1
+
         return bytes_to_save
 
 

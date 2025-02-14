@@ -10,7 +10,7 @@ class MinesweepBoard:
     def __init__(self, dimension):
         self.dimension = dimension
         self.board = [ [Tile.NOT_EXPLORED] * self.dimension for _ in range(self.dimension) ]
-        self.explored = []
+        self.explored = set()
 
     def create_mines(self):
         mines = round(self.dimension * self.dimension * random.uniform(0.16, 0.22))
@@ -39,7 +39,7 @@ class MinesweepBoard:
             return None
         
         explored_tile = self.board[y][x]
-        self.explored.append(self.coords_to_index(y, x))
+        self.explored.add(self.coords_to_index(y, x))
 
         if explored_tile == Tile.MINE:
             self.board[y][x] = Tile.MINE_EXPLORED
@@ -54,6 +54,12 @@ class MinesweepBoard:
                 for x_ in range(-1,2):
                     if self.in_bounds(y + y_, x + x_):
                         self.explore(y + y_, x + x_)
+    
+    def set_mines_as_explored(self):
+        for y in range(self.dimension):
+            for x in range(self.dimension):
+                if self.is_mine(y, x):
+                    self.explored.add(self.coords_to_index(y, x))
 
     def in_bounds(self, y, x):
         return 0 <= y < self.dimension and 0 <= x < self.dimension

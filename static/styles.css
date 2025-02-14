@@ -5,3 +5,7 @@
 }
 
 div { text-align: center; }
+
+.tint {
+    filter: sepia(100%) saturate(200%) hue-rotate(220deg);
+}

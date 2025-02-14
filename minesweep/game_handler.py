@@ -3,12 +3,14 @@ import threading
 import time
 
 class GameHandler:
+    LOOPTIME = 10000
+
     def __init__(self, socketio):
         self.socketio = socketio
         self.game_loop_thread = None
         self.game = MinesweepGame()
 
-        self.next_game_loop = self.time_now_ms() + 30000
+        self.next_game_loop = self.time_now_ms() + self.LOOPTIME
         self.game_loop_start()
 
     def time_now_ms(self):
@@ -23,7 +25,7 @@ class GameHandler:
     def game_loop(self):
         while True:
             if self.time_now_ms() > self.next_game_loop:
-                self.next_game_loop = self.time_now_ms() + 30000
+                self.next_game_loop = self.time_now_ms() + self.LOOPTIME
 
                 self.game.play_turn()
                 self.game.save_board('/data/board')
@@ -32,5 +34,5 @@ class GameHandler:
                     self.socketio.send(bytes(self.game.online_data()))
                     self.game.send_data = False
                 self.game.new_board = False
-                self.game.gameboard.explored = []
+                self.game.gameboard.explored.clear()
             time.sleep(0.2)

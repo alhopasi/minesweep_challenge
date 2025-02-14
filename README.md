@@ -27,11 +27,9 @@ Online version running in https://theminesweep.com
 
 #### Development ####
 Required:
-- show on gui which tile you voted (tint color slightly?)
-- when hitting mine or winning, also send only changed data to server, not whole board.
+- set up Gunicorn to use with prod environment
 
 Nice to have:
-- better timer to update board status (better way to implement?) - send timer info with data, whenever data is sent?
 - send info how many votes was sent on previous tick
 - nicer gui
 - history of earlier games
@@ -41,6 +39,6 @@ Nice to have:
 Info:
 - Development environment uses Docker volumes for source code to load from, making easy changes possible, not needing to build the whole container
 - Production environment has all source code bundled in the Docker container.
-- ./data and ./data/online are used as volumes for persistent storage to save board data.
+- ./data is used as volume for persistent storage to save board data, and also using ./data/online to save online board data.
 
 Minesweeper Tiles from https://kerkday.itch.io/minesweeper-tiles

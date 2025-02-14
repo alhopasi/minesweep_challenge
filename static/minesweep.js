@@ -1,4 +1,5 @@
 var gameStatus
+var tintTile
 
 function parseData(arrayBuffer) {
     const dataView = new DataView(arrayBuffer)
@@ -11,11 +12,12 @@ function parseData(arrayBuffer) {
     const data = new Uint8Array(arrayBuffer)
     const boardData = data.slice(2)
     
-    if (document.getElementById("board_table") == null || gameStatus > 0) {
+    if (document.getElementById('board_table') == null || gameStatus == 3) {
         buildBoardFromData(boardData, gameDimension)
     } else {
         updateBoardFromData(boardData, gameDimension)
     }
+    clearTint()
 }
 
 function buildBoardFromData(boardData, gameDimension) {
@@ -69,6 +71,7 @@ function buildBoardFromData(boardData, gameDimension) {
             img.addEventListener('click', function (e) {
                 if ( gameStatus == 0 || gameStatus == 3) {
                     socket.send(y + " " + x)
+                    addTint(y*gameDimension + x)
                 }
               });
 
@@ -78,12 +81,24 @@ function buildBoardFromData(boardData, gameDimension) {
         }
         table.appendChild(tr)
     }
-    if ( document.getElementById("board").hasChildNodes() ) {
-        document.getElementById("board").replaceChild(table, document.getElementById("board").firstChild);
+    if ( document.getElementById('board').hasChildNodes() ) {
+        document.getElementById('board').replaceChild(table, document.getElementById('board').firstChild);
     } else {
-        document.getElementById("board").appendChild(table);
+        document.getElementById('board').appendChild(table);
     }
-    document.getElementById("board").style.marginLeft = parseInt((window.innerWidth - ((gameDimension + 4) * 16)) / 2) + 'px'
+    document.getElementById('board').style.marginLeft = parseInt((window.innerWidth - ((gameDimension + 4) * 16)) / 2) + 'px'
+}
+
+function clearTint() {
+    if (document.getElementById('tile' + tintTile) && document.getElementById('tile' + tintTile).classList && document.getElementById('tile' + tintTile).classList.contains('tint')) {
+        document.getElementById('tile' + tintTile).classList.remove('tint');
+      }
+}
+
+function addTint(tileValue) {
+    clearTint()
+    document.getElementById('tile' + parseInt(tileValue)).classList.add('tint')
+    tintTile = tileValue
 }
 
 function setImage(tileValue) {
@@ -129,7 +144,7 @@ function setImage(tileValue) {
 }
 
 window.onresize = () => {
-    document.getElementById("board").style.marginLeft = parseInt((window.innerWidth - document.getElementById("board_table").offsetWidth) / 2) + 'px'
+    document.getElementById('board').style.marginLeft = parseInt((window.innerWidth - document.getElementById('board_table').offsetWidth) / 2) + 'px'
 }
 
 async function loadBoard() {
@@ -150,12 +165,14 @@ function updateBoardFromData(boardData, gameDimension) {
     for (let i = 0; i < boardData.length; i++) {
         
         if (byteNumber < tileNumberBytes) {
-            tileNumber = tileNumber << 8
-            tileNumber = tileNumber + boardData[i + byteNumber]
+            shiftAmount = 8 * byteNumber
+            value = boardData[i]
+            valueToAdd = value << shiftAmount
+            tileNumber = tileNumber + valueToAdd
             byteNumber += 1
             continue
         } else {
-            var td = document.getElementById("tile" + parseInt(tileNumber))
+            var td = document.getElementById('tile' + parseInt(tileNumber))
             td.removeChild(td.firstChild)
             var img = setImage(boardData[i])
             td.appendChild(img)
@@ -174,15 +191,15 @@ function calculateBytesNeeded(gameDimension) {
     return result
 }
 
-var timer = 30, minutes, seconds;
+var timer = 10, minutes, seconds;
 
 function startTimer(duration, display) {
     setInterval( () => {
         minutes = parseInt(timer / 60, 10);
         seconds = parseInt(timer % 60, 10);
 
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
 
         display.textContent = minutes + ":" + seconds;
 
@@ -192,7 +209,7 @@ function startTimer(duration, display) {
     }, 1000);
 }
 window.onload = () => {
-    startTimer(29, document.getElementById("timer"));
+    startTimer(9, document.getElementById('timer'));
 }
 
 
@@ -201,7 +218,7 @@ const socket = io();  // Connect to the WebSocket server
 // when receiving message, apply changes to board and reset timer
 socket.on('message', (data) => {
     parseData(data)
-    timer = 29
+    timer = 9
 })
 
 // Event listener for the open event
