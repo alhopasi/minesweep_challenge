@@ -212,29 +212,16 @@ window.onload = () => {
     startTimer(9, document.getElementById('timer'));
 }
 
+const socket = io(window.location.origin, {
+    transports: ['websocket']  // Force WebSocket transport
+});  // Connect to the WebSocket server
 
-const socket = io();  // Connect to the WebSocket server
-
+  
 // when receiving message, apply changes to board and reset timer
 socket.on('message', (data) => {
     parseData(data)
     timer = 9
 })
-
-// Event listener for the open event
-socket.on('open', () => {
-    console.log('Connected to the WebSocket server');
-})
-
-// Event listener for error
-socket.addEventListener('error', (event) => {
-    console.error('WebSocket error:', event);
-});
-
-// Event listener for close event
-socket.addEventListener('close', () => {
-    console.log('Disconnected from the WebSocket server');
-});
 
 
 loadBoard()

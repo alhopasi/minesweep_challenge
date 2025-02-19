@@ -17,24 +17,27 @@ Online version running in https://theminesweep.com
 #### How it works ####
 - Click on tile to vote
 - Votes are counted and the tiles with most votes get explored
-- As many tiles get explored at most, as many the dimension of the board is. ex. if board is 10x10, the amount of explored tiles is at most 10
+- Max explored tiles / tick is board dimension / 4. (100x100 board = 100/4 = 25)
 - If votes are tied for a tile, the order gets randomized in which they are explored
-- You can only vote once / IP address for each tick
-- Ticks run every 30 seconds
+- You can only vote for one tile / IP address for each tick
+- Ticks run every 10 seconds
 - If all empty tiles are explored, players win and the board dimension increases by 1
 - If a mine gets explored, players lose and the board resets at same dimension
 
 
 #### Development ####
-Required:
-- set up Gunicorn to use with prod environment
+Next:
+- check if aws prod does not face cors-issues with websocket prod server. If it does, allow cors (*?)
 
 Nice to have:
-- send info how many votes was sent on previous tick
-- nicer gui
+- nicer gui:
+  - split view horizontally into top header (menu / info) and bottom board.
+  - send info how many votes was sent on previous tick
+  - rules page / how it works
 - history of earlier games
 - login system for users to keep track of: how many times voted, how many mines stepped into, at what level joined
-- rules page / how it works
+
+
 
 Info:
 - Development environment uses Docker volumes for source code to load from, making easy changes possible, not needing to build the whole container
