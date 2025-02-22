@@ -2,13 +2,10 @@ from flask import Flask, render_template, request, jsonify, send_file
 from minesweep.game_handler import GameHandler
 from flask_socketio import SocketIO, emit, send
 import os
+import eventlet
 
 app = Flask(__name__)
-if os.environ.get('ENV', 'PROD') == 'DEV':
-    socketio = SocketIO(app, async_mode='threading')
-else:
-    import eventlet
-    socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app, async_mode='eventlet')
 
 @app.route('/', methods = ['GET'])
 def index():
@@ -54,8 +51,3 @@ def handle_message(message):
 
 game_handler = GameHandler(socketio)
 game = game_handler.game
-
-
-if os.environ.get('ENV', 'PROD') == 'DEV':
-    if __name__ == '__main__':
-        socketio.run(app, debug=True)

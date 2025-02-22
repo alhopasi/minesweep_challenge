@@ -1,3 +1,7 @@
+body {
+    background-color: #999999;
+  }
+
 .board_inner, table {
     border-collapse: collapse;
     padding: 0;

@@ -143,8 +143,13 @@ function setImage(tileValue) {
     return img
 }
 
+var windowWidth = window.innerWidth
+
 window.onresize = () => {
-    document.getElementById('board').style.marginLeft = parseInt((window.innerWidth - document.getElementById('board_table').offsetWidth) / 2) + 'px'
+    if (window.innerWidth != windowWidth) {
+        windowWidth = window.innerWidth
+        document.getElementById('board').style.marginLeft = parseInt((window.innerWidth - document.getElementById('board_table').offsetWidth) / 2) + 'px'
+    }
 }
 
 async function loadBoard() {
