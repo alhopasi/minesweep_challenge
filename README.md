@@ -26,10 +26,77 @@ Online version running in https://theminesweep.com
 
 
 #### Development ####
+
 Next:
-- check if aws prod does not face cors-issues with websocket prod server. If it does, allow cors (*?)
+- database:
+  - user-entity:
+    - username (id)
+    - password
+    - total score
+    - mine hits
+    - explored tiles (incl. bombs)
+    - participated in levels (list) + score for each level
+    - last gametick
+    - consecutive successful explorations (score streak)
+    - score level (min 1)
+    - victories (explored tile on turn when the board was victorius)
+    - admin flag
+  - gametick (increment by 1 when game ticks)
+
+- user web ui / backend
+  - create new user
+  - login with username and password
+  - logout (when logged in)
+  - user page (when logged in)
+    - change password option
+    - delete user option
+  - admin options:
+    - list users
+    - delete user
+    - change game level / reset current level
+
+- score system:
+  - score gets saved if the user is logged in. Otherwise it's temporary.
+  - each level has a scoreboard (show top 20, ordered by points + victories).
+  - if a mine is hit, the scoreboard is cleared.
+  - if victory, save top 20 scores as scoreboard
+  - score streak:
+    - if missed gameticks, decrease score streak by missed ticks amount:
+      - score_streak = last_gametick - current_gametick + 1
+    - if hit mine:
+      - score_streak -= score_level
+    - else: score_streak += 1
+    - if score_streak == score_level, increase level:
+      - score_level += 1, score_streak = 0
+    - while score_streak < 0:
+      - score_level -= 1, score_streak += score_level  (if score_level == 1 && score_streak <= 0, end)
+    - give score to player according to score level.
+      - if player was only one who voted a tile (and it got explored), give double points
+      - if given_score < victories: given_score = victories
+    
+- level history
+  - save gameboard when victory / loss
+  - save scoreboard when victory
+  - web ui page to show finished level / scoreboard, example:
+  - level 10 (current)
+    - board 2 - mine_exp_image - turn 21
+    - board 1 - mine_exp_image - turn 2
+  - level 9
+    - board 3 - mine_image - turn 34
+    - board 2 - mine_exp_image - turn 4
+    - board 1 - mine_exp_image - turn 1
+  - level 8 ....
+
+- Hall Of Fame
+  - Show all top score players for previous levels
+  - Show top 100 players
+  - Sort by: Total Score, Victories
+
+
+
 
 Nice to have:
+- reputation system for user (if user has triggered mines, users votes don't count unless the user makes 'good' votes)
 - nicer gui:
   - split view horizontally into top header (menu / info) and bottom board.
   - send info how many votes was sent on previous tick

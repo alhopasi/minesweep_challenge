@@ -1,53 +1,67 @@
-from flask import Flask, render_template, request, jsonify, send_file
-from minesweep.game_handler import GameHandler
-from flask_socketio import SocketIO, emit, send
 import os
 import eventlet
+from flask import Flask, request, jsonify, send_file
+from minesweep.game_handler import GameHandler
+from config import Config
+from routes.auth import auth_bp
+from routes.main import main_bp
+from routes.minesweep import minesweep_bp
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet')
 
-@app.route('/', methods = ['GET'])
-def index():
-    return render_template('index.html')
-
-@app.route('/board', methods = ['GET'])
-def post_board():
-    return send_file('/data/online/board', mimetype='application/octet-stream')
-
-@app.route('/play', methods = ['GET'])
-def next_turn():
-    game.play_turn()
-    return jsonify(success=True)
-
-@app.route('/hardreset', methods = ['GET'])
-def restart_hard():
-    game.reset_game(3)
-    return jsonify(success=True)
-
-@app.route('/reset', methods = ['GET'])
-def restart():
-    game.reset_game(game.gameboard.dimension)
-    return jsonify(success=True)
-
-@app.route('/stats', methods = ['GET'])
-def stats():
-    return jsonify(dimension = game.gameboard.dimension, board = game.gameboard.board, running = game.game_running, victory = game.victory, votes = game.votes)
+app.config.from_object(Config)
 
 
-@socketio.on('connect')
-def handle_connect():
-    pass
+db = SQLAlchemy(app)
 
-@socketio.on('message')
-def handle_message(message):
-    vote_y, vote_x = message.split(" ")
-    if not game.validate_vote(vote_y, vote_x):
-        return None
-    vote_y, vote_x = int(vote_y), int(vote_x)
-    vote_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-    game.vote(vote_y, vote_x, vote_ip)
+app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(main_bp)
+app.register_blueprint(minesweep_bp)
+
+from models.user import User
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def create_database():
+    try:
+        # Connect to the default 'postgres' database to check if our database exists
+        conn = psycopg2.connect(
+            dbname='postgres',  # Connect to the 'postgres' database (default database)
+            user='postgres',  # Your PostgreSQL username
+            password='your_password',  # Your PostgreSQL password
+            host='localhost'
+        )
+        conn.autocommit = True  # Enable autocommit to execute commands like CREATE DATABASE
+        cursor = conn.cursor()
+
+        # Check if the database exists
+        cursor.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'minesweepdb';")
+        exists = cursor.fetchone()
+
+        if not exists:
+            # If the database doesn't exist, create it
+            cursor.execute("CREATE DATABASE minesweepdb;")
+            print("Database 'minesweepdb' created successfully!", flush=True)
+        else:
+            print("Database 'minesweepdb' already exists.", flush=True)
+
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"Error creating database: {e}")
+
+# Call the create_database function before running the app
+create_database()
+
+# Initialize the database and create tables if they don't exist
+with app.app_context():
+    db.create_all()
+
 
 game_handler = GameHandler(socketio)
 game = game_handler.game
